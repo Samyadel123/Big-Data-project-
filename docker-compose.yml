@@ -1,0 +1,102 @@
+
+
+services:
+  # --- HADOOP SERVICES ---
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    restart: always
+    ports:
+      # HDFS Web UI (original 9870:9870)
+      - 9870:9870
+      # HDFS Client Port (Internal 9000, Host 9002 to avoid conflict with MinIO Console 9001)
+      - 9002:9000
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    restart: always
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864"
+    env_file:
+      - ./hadoop.env
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    volumes:
+      - hadoop_historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+
+  # --- MINIO SERVICES ---
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: minio
+    ports:
+      # MinIO API/Client port
+      - "9000:9000"
+      # MinIO Console Web UI port
+      - "9001:9001"
+    command: [ "server", "--console-address", ":9001", "/data" ]
+    volumes:
+      - data-minio:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+
+  minio-buckets:
+    image: quay.io/minio/mc:latest
+    container_name: minio-buckets
+    depends_on:
+      - minio
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+      # Wait for MinIO to be ready
+      sleep 5;
+      # Set alias with correct user/pass (using the correct default credentials)
+      /usr/bin/mc alias set dockerminio http://minio:9000 minioadmin minioadmin;
+      # Create the bucket
+      /usr/bin/mc mb dockerminio/yourbucketname;
+      exit 0;
+      "
+
+---
+
+volumes:
+  # Hadoop Volumes
+  hadoop_namenode:
+  hadoop_datanode:
+  hadoop_historyserver:
+  # MinIO Volume
+  data-minio:
