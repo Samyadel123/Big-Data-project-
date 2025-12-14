@@ -10,7 +10,7 @@ services:
       # HDFS Web UI (original 9870:9870)
       - 9870:9870
       # HDFS Client Port (Internal 9000, Host 9002 to avoid conflict with MinIO Console 9001)
-      - 9002:9000
+      - 9050:9000
     volumes:
       - hadoop_namenode:/hadoop/dfs/name
     environment:
