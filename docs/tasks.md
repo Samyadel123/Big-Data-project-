@@ -2,5 +2,5 @@
 - [x] make a function that genrat synthatic data save to bronze : Khaled 
 - [ ] clean the data and save as parquet save to silver : Mazen
 - [x] setup HDFS in docker compose file and save cleaned data in it : Samy
-- [ ] Do factor analysis and Monto carlo on cleaned data and save to gold : Abdu
+- [ ] Do factor analysis and Monto carlo on cleaned data and save to gold : Samy & Abdu
 - [ ] make a dashbord using the cleaned data and analysis results : Samy 
