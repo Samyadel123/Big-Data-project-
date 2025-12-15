@@ -1,4 +1,4 @@
-## firs steps 
+## first steps 
 
 - weather conditions and traffic behavior 
 #### weather data set 
